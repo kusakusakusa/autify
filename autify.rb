@@ -14,8 +14,6 @@
 
 # TODO: handle infinite scrolling pages, use selenium
 
-# ruby autify.rb https://autify.com/pricing https://www.google.com
-
 require 'open-uri'
 
 for arg in ARGV
