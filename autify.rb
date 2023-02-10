@@ -16,12 +16,34 @@
 
 require 'open-uri'
 
-for arg in ARGV
-  uri = URI.parse(arg)
-
-  open("#{uri.host.to_s}.html", "w+") do |file|
-    uri.open do |url|
-      file.write(url.read)
+def parse!(url:)
+  # TODO: improve validation, maybe https://github.com/amogil/url_regex
+  if URI.regexp =~ url
+    return URI.parse(url)
+  else
+    open("#{url.host.to_s}.html", "w+") do |file|
+      file.write("The url ('#{url}') provided is not valid")
     end
   end
+end
+
+def download(url:)
+  open("#{url.host.to_s}.html", "w+") do |file|
+    url.open do |html|
+      file.write(html.read)
+    end
+  end
+rescue SocketError => e
+  open("#{url.host.to_s}.html", "w+") do |file|
+    file.write("The url ('#{url}') provided is not valid")
+  end
+end
+
+urls = []
+ARGV.each do |arg|
+  urls << parse!(url: arg)
+end
+
+urls.each do |url|
+  download(url:)
 end

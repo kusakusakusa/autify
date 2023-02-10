@@ -1,5 +1,5 @@
 # bash autify.sh https://autify.com/pricing https://www.google.com
-# rm autify.com.html www.google.com.html
+# rm *.html
 
 # docker build -t autify .
 # docker run -it autify
