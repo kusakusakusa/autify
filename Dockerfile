@@ -1,8 +1,15 @@
+# bash autify.sh https://autify.com/pricing https://www.google.com
+# rm autify.com.html www.google.com.html
+
 # docker build -t autify .
 # docker run -it autify
-# ruby autify.rb https://autify.com/pricing https://www.google.com
+# ./autify.rb https://autify.com/pricing https://www.google.com
+# autify https://autify.com/pricing https://www.google.com
+
 FROM ruby:3.2
 RUN mkdir /workspace
 WORKDIR /workspace/
-COPY . /workspace
+COPY ./autify* .
+RUN chmod a+x /workspace/autify* && \
+    mv /workspace/autify* /usr/local/bin
 CMD ["/bin/bash"]
