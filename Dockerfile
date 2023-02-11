@@ -4,7 +4,7 @@
 # docker build -t autify .
 # docker run -it autify
 # ./autify.rb https://autify.com/pricing https://www.google.com
-# autify https://autify.com/pricing https://www.google.com
+# autify https://autify.com/pricing https://www.google.com https://stackoverflow.com http://10.255.255.1 https://github.com https://wkerbgwebrgtkuwerbytewrt.com
 
 FROM ruby:3
 RUN mkdir /workspace

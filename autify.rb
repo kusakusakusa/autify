@@ -16,9 +16,12 @@
 
 require 'open-uri'
 require 'nokogiri'
-require 'pry'
+require 'timeout'
+# require 'pry'
 
-@output = []
+READ_TIMEOUT = 3
+
+@output = {}
 
 def host_of(url:)
   if url.is_a?(String)
@@ -46,8 +49,8 @@ def retrieve_last_crawl(url:)
   end
 end
 
-def handle_error(url:)
-  @output << "site: #{url.to_s} (URL provided not valid)"
+def handle_error(url:, msg: 'URL provided not valid')
+  @output[url.to_s] = "site: #{url.to_s} (#{msg})"
 end
 
 def parse!(url:)
@@ -60,22 +63,26 @@ def parse!(url:)
 end
 
 def download(url:)
-  url.open do |html|
-    content = html.read
+  Timeout.timeout(READ_TIMEOUT) do
+    url.open(read_timeout: 10) do |html|
+      content = html.read
 
-    open("#{host_of(url:)}.html", "w+") do |file|
-      file.write(content)
+      open("#{host_of(url:)}.html", "w+") do |file|
+        file.write(content)
+      end
+
+      FileUtils.mkdir_p(host_of(url:))
+
+      doc = Nokogiri::HTML(content)
+      @output[url.to_s] = "site: #{url.to_s}\nnum_link: #{doc.css('a').size}\nimages: #{doc.css('img').size}\nlast_fetch: #{retrieve_last_crawl(url:)}"
+
+      record_last_crawl(url:)
     end
-
-    FileUtils.mkdir_p(host_of(url:))
-
-    doc = Nokogiri::HTML(content)
-    @output << "site: #{url.to_s}\nnum_link: #{doc.css('a').size}\nimages: #{doc.css('img').size}\nlast_fetch: #{retrieve_last_crawl(url:)}"
-
-    record_last_crawl(url:)
   end
 rescue URI::InvalidURIError
   handle_error(url:)
+rescue Timeout::Error
+  handle_error(url:, msg: 'URL timed out')
 rescue SocketError
   handle_error(url:)
 end
@@ -85,9 +92,15 @@ ARGV.each do |arg|
   urls << parse!(url: arg)
 end
 
-# TODO: use threads
+threads = []
 urls.each do |url|
-  download(url:)
+  threads << Thread.new do
+    download(url:)
+  end
 end
 
-puts @output.join("\n\n")
+threads.each(&:join)
+
+puts (urls.map do |url|
+  @output[url.to_s]
+end.join("\n\n"))
